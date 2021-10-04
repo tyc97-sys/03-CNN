@@ -11,14 +11,13 @@ import time
 import random
 from readfile import *
 from module import *
+from ImgDataset import *
 
 random.seed(1024)
 
-
-
 # 分別將 training set、validation set、testing set 用 readfile 函式讀進來
 
-workspace_dir = './food-11'
+workspace_dir = r'E:\Dataset\CNN_dataset\food-11'
 
 train_x, train_y, val_x, val_y, test_x = make_set(workspace_dir)
 
@@ -35,7 +34,7 @@ test_transform = transforms.Compose([
     transforms.ToTensor(),
 ])
 
-batch_size = 64
+batch_size = 128
 train_set = ImgDataset(train_x, train_y, train_transform)
 # train_set = ImgDataset(train_x, train_y, None)
 val_set = ImgDataset(val_x, val_y, test_transform)
@@ -47,12 +46,12 @@ val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False)
 # Model
 
 
-model = Classifier().cuda()
+model = VGG16().cuda()
 loss = nn.CrossEntropyLoss()  # 因為是 classification task，所以 loss 使用 CrossEntropyLoss
 # optimizer = torch.optim.Adam(model.parameters(), lr=0.001) # optimizer 使用 Adam
 optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)  # optimizer with SGDM
 
-num_epoch = 10
+num_epoch = 100
 
 for epoch in range(num_epoch):
     epoch_start_time = time.time()
@@ -94,62 +93,7 @@ train_val_set = ImgDataset(train_val_x, train_val_y, None)
 train_val_loader = DataLoader(train_val_set, batch_size=batch_size, shuffle=True)
 
 
-# model_best = Classifier().cuda()
-# loss = nn.CrossEntropyLoss()  # 因為是 classification task，所以 loss 使用 CrossEntropyLoss
-# # optimizer = torch.optim.Adam(model_best.parameters(), lr=0.001) # optimizer 使用 Adam
-# optimizer = torch.optim.SGD(model_best.parameters(), lr=0.001, momentum=0.9)   # optimizer with SGDM
-# num_epoch = 10
-# for epoch in range(num_epoch):
-#     epoch_start_time = time.time()
-#     train_acc = 0.0
-#     train_loss = 0.0
-#
-#     model_best.train()
-#     for i, data in enumerate(train_val_loader):
-#         optimizer.zero_grad()
-#         train_pred = model_best(data[0].cuda())
-#         batch_loss = loss(train_pred, data[1].cuda())
-#         batch_loss.backward()
-#         optimizer.step()
-#
-#         train_acc += np.sum(np.argmax(train_pred.cpu().data.numpy(), axis=1) == data[1].numpy())
-#         train_loss += batch_loss.item()
-#
-#         # 將結果 print 出來
-#     print('[%03d/%03d] %2.2f sec(s) Train Acc:+ %3.6f Loss: %3.6f' % \
-#           (epoch + 1, num_epoch, time.time() - epoch_start_time, \
-#            train_acc / train_val_set.__len__(), train_loss / train_val_set.__len__()))
-
 # saving model
 PATH_model = './model_best_ADAM_10'
 PATH_model += '.pkl'
 torch.save(model, PATH_model)
-
-# getting confusion matrix on valid set
-model.eval()
-prediction = []
-ground_truth = []
-with torch.no_grad():
-    for i, (data, ans) in enumerate(val_loader):
-        test_pred = model(data.cuda())
-        test_label = np.argmax(test_pred.cpu().data.numpy(), axis=1)
-        for y, gt in zip(test_label, ans):
-            prediction.append(y)
-            ground_truth.append(gt.cpu().item())
-
-import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix
-
-confmat = confusion_matrix(y_true=ground_truth, y_pred=prediction, normalize='true')
-confmat = np.round(confmat, decimals=3)
-fig, ax = plt.subplots(figsize=[13, 13])
-ax.matshow(confmat, cmap=plt.cm.Blues, alpha=0.3)
-for i in range(confmat.shape[0]):
-    for j in range(confmat.shape[1]):
-        ax.text(x=j, y=i, s=confmat[i, j], va='center', ha='center')
-plt.xticks(size=10)
-plt.yticks(size=10)
-plt.xlabel('predicted label')
-plt.ylabel('true label')
-plt.show()
-

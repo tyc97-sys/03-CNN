@@ -10,25 +10,8 @@ from torch.utils.data import DataLoader, Dataset
 import time
 from module import *
 
-def readfile(path, label):
-    # label 是一個 boolean variable，代表需不需要回傳 y 值
-    image_dir = sorted(os.listdir(path))
-    # return 指定 dir 包含的所有檔案名字列表
-
-    x = np.zeros((len(image_dir), 128, 128, 3), dtype=np.uint8)
-    y = np.zeros((len(image_dir)), dtype=np.uint8)
-    for i, file in enumerate(image_dir):
-        img = cv2.imread(os.path.join(path, file))
-        x[i, :, :] = cv2.resize(img,(128, 128))
-        if label:
-          y[i] = int(file.split("_")[0])
-    if label:
-      return x, y
-    else:
-      return x
-
 # 分別將 training set、validation set、testing set 用 readfile 函式讀進來
-workspace_dir = './food-11'
+workspace_dir = r'E:\Dataset\CNN_dataset\food-11'
 print("Reading data")
 
 train_x, train_y = readfile(os.path.join(workspace_dir, "training"), True)

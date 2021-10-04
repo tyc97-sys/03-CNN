@@ -11,10 +11,11 @@ import time
 import random
 from readfile import *
 from module import *
+from ImgDataset import *
 
 model = torch.load('model_best_ADAM_10.pkl')
 
-workspace_dir = './food-11'
+workspace_dir = r'E:\Dataset\CNN_dataset\food-11'
 
 train_x, train_y, val_x, val_y, test_x = make_set(workspace_dir)
 
